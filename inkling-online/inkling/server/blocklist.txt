@@ -1,0 +1,4 @@
+# Words listed here (one per line, lowercase) are masked in chat and rejected as names.
+# This file ships nearly empty on purpose - add the words you want to block.
+idiot
+stupid

@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: inkling
+    runtime: docker
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: TRUST_PROXY
+        value: "1"

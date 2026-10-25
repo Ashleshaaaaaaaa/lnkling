@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Inkling - free multiplayer drawing and guessing game</title>
+  <meta name="description" content="Draw words, guess what your friends draw, and score the most points. Free multiplayer drawing and guessing game.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%8F%EF%B8%8F%3C/text%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ===================================================== LANDING -->
+<div id="landing" class="screen">
+  <header class="hero">
+    <h1 id="logo" aria-label="Inkling"></h1>
+    <p class="tagline">Draw it. Guess it. Win it.</p>
+  </header>
+
+  <main class="start-card">
+    <div class="avatar-pick">
+      <div id="av-preview" class="av-big"></div>
+      <div class="av-controls">
+        <div class="av-row"><button type="button" data-av="color" data-d="-1" aria-label="Previous color">&lsaquo;</button><span>Color</span><button type="button" data-av="color" data-d="1" aria-label="Next color">&rsaquo;</button></div>
+        <div class="av-row"><button type="button" data-av="eyes" data-d="-1" aria-label="Previous eyes">&lsaquo;</button><span>Eyes</span><button type="button" data-av="eyes" data-d="1" aria-label="Next eyes">&rsaquo;</button></div>
+        <div class="av-row"><button type="button" data-av="mouth" data-d="-1" aria-label="Previous mouth">&lsaquo;</button><span>Mouth</span><button type="button" data-av="mouth" data-d="1" aria-label="Next mouth">&rsaquo;</button></div>
+        <button type="button" id="av-rand" class="btn small">Randomize</button>
+      </div>
+    </div>
+    <div class="fields">
+      <input id="name" maxlength="20" placeholder="Enter your name" autocomplete="off" aria-label="Your name">
+      <select id="lang" aria-label="Language"></select>
+    </div>
+    <p id="join-note" class="note" hidden></p>
+    <button id="play" class="btn primary big">Play!</button>
+    <button id="create" class="btn big">Create private room</button>
+    <p id="err" class="err" role="alert"></p>
+  </main>
+
+  <section class="info">
+    <article class="info-card">
+      <h2>About</h2>
+      <p>Inkling is a free online multiplayer drawing and guessing game. A game has a few rounds. In every round each player draws a word they choose, while everyone else races to guess it and earn points. Whoever has the most points at the end wins.</p>
+    </article>
+    <article class="info-card">
+      <h2>What's inside</h2>
+      <ul>
+        <li>Public rooms and private rooms with an invite link</li>
+        <li>Up to 20 players, 28 languages, custom word lists</li>
+        <li>Normal, Hidden and Combination word modes</li>
+        <li>Undo, fill, eraser, 20 colors, left and right click colors</li>
+        <li>Hotkeys you can change, sound volume, mobile layout</li>
+        <li>Kick, ban, votekick, mute and report tools</li>
+      </ul>
+    </article>
+    <article class="info-card wide">
+      <h2>How to play</h2>
+      <ol class="steps">
+        <li><b>Pick a word.</b> When it's your turn, choose a word to draw.</li>
+        <li><b>Draw it.</b> Sketch your word. No writing letters!</li>
+        <li><b>Let them guess.</b> Everyone else types guesses into the chat.</li>
+        <li><b>Guess too.</b> When someone else draws, race to type the answer.</li>
+        <li><b>Win.</b> The faster you guess, the more points you get. Most points wins!</li>
+      </ol>
+    </article>
+  </section>
+
+  <footer class="foot">
+    <nav><button class="linkbtn" data-open="dlg-contact">Contact</button><button class="linkbtn" data-open="dlg-terms">Terms of Service</button><button class="linkbtn" data-open="dlg-credits">Credits</button></nav>
+    <p>The owner of this site is not responsible for user generated content (drawings, messages, usernames).</p>
+  </footer>
+</div>
+
+<!-- ===================================================== GAME -->
+<div id="game" class="screen" hidden>
+  <div class="topbar">
+    <div id="clock" class="clock" aria-label="Time left">--</div>
+    <div class="roundinfo" id="roundinfo">Waiting</div>
+    <div class="wordbar">
+      <div id="hinttitle" class="hinttitle">Waiting for players</div>
+      <div id="word" class="word" aria-live="polite"></div>
+    </div>
+    <div class="top-actions">
+      <button id="btn-invite" class="icon-btn" title="Invite friends">Invite</button>
+      <button id="btn-settings" class="icon-btn" title="Settings" aria-label="Settings">Settings</button>
+      <button id="btn-leave" class="icon-btn" title="Leave room">Leave</button>
+    </div>
+  </div>
+
+  <aside id="players" class="players" aria-label="Players"></aside>
+
+  <section class="stage">
+    <div class="canvas-wrap" id="canvas-wrap">
+      <div class="frame" id="frame">
+        <canvas id="board" width="800" height="600" aria-label="Drawing board"></canvas>
+        <div id="bubbles" class="bubbles" aria-hidden="true"></div>
+        <div id="overlay" class="overlay" hidden></div>
+        <div id="lobby" class="lobby" hidden></div>
+      </div>
+    </div>
+    <div id="toolbar" class="toolbar">
+      <div class="tb-colors">
+        <div class="selected" aria-hidden="true"><span id="sw1" title="Left-click color"></span><span id="sw2" title="Right-click color"></span></div>
+        <div id="palette" class="palette" role="group" aria-label="Colors (right-click to set second color)"></div>
+      </div>
+      <div class="tb-tools">
+        <div id="sizes" class="sizes" role="group" aria-label="Brush size"></div>
+        <button class="tool" data-tool="brush" title="Brush">Brush</button>
+        <button class="tool" data-tool="eraser" title="Eraser">Eraser</button>
+        <button class="tool" data-tool="fill" title="Fill">Fill</button>
+        <button class="tool act" id="t-undo" title="Undo">Undo</button>
+        <button class="tool act" id="t-clear" title="Clear canvas">Clear</button>
+      </div>
+    </div>
+  </section>
+
+  <aside class="chat" id="chat">
+    <div id="messages" class="messages" aria-live="polite"></div>
+    <div id="kbd" class="kbd" hidden></div>
+    <form id="chatform" class="chatform" autocomplete="off">
+      <input id="chatinput" maxlength="100" placeholder="Type your guess here..." aria-label="Chat and guesses">
+      <button class="btn small primary" type="submit">Send</button>
+    </form>
+  </aside>
+</div>
+
+<!-- ===================================================== DIALOGS -->
+<dialog id="dlg-settings">
+  <h2>Settings</h2>
+  <label class="field">Volume <output id="vol-out">50%</output>
+    <input type="range" id="volume" min="0" max="100" step="5">
+  </label>
+  <h3>Hotkeys</h3>
+  <p class="note">Click a key, then press the new key. Hotkeys work only while you are drawing.</p>
+  <div id="hotkeys" class="hotkeys"></div>
+  <button class="btn small" id="hk-reset" type="button">Reset hotkeys</button>
+  <h3>Miscellaneous</h3>
+  <label class="field">Brush pressure sensitivity (pen and touch)
+    <select id="opt-pressure"><option value="off">Off</option><option value="on">On</option></select>
+  </label>
+  <label class="field">Mobile keyboard (experimental)
+    <select id="opt-kbd"><option value="off">Disabled</option><option value="on">Enabled</option></select>
+  </label>
+  <label class="field">Mobile keyboard language layout
+    <select id="opt-kbdlayout"><option value="qwerty">QWERTY</option><option value="qwertz">QWERTZ</option><option value="azerty">AZERTY</option></select>
+  </label>
+  <label class="field">Mobile chat input position
+    <select id="opt-chatpos"><option value="bottom">Bottom</option><option value="top">Top</option></select>
+  </label>
+  <label class="field">Mobile chat bubbles (messages on the drawing board)
+    <select id="opt-bubbles"><option value="on">Enabled</option><option value="notdrawing">Disabled while drawing</option><option value="off">Disabled</option></select>
+  </label>
+  <form method="dialog" class="dlg-actions"><button class="btn primary">Done</button></form>
+</dialog>
+
+<dialog id="dlg-invite">
+  <h2>Invite your friends!</h2>
+  <p class="note">Share this link. Anyone who opens it joins your room.</p>
+  <input id="invite-link" readonly aria-label="Invite link">
+  <div class="dlg-actions">
+    <button class="btn primary" id="invite-copy" type="button">Click to copy</button>
+    <form method="dialog"><button class="btn">Close</button></form>
+  </div>
+</dialog>
+
+<dialog id="dlg-player">
+  <h2 id="pm-name">Player</h2>
+  <div id="pm-actions" class="menu-actions"></div>
+  <form method="dialog" class="dlg-actions"><button class="btn">Close</button></form>
+</dialog>
+
+<dialog id="dlg-report">
+  <h2>Report <span id="rp-name"></span></h2>
+  <p class="note">Please select the reasons for your report.</p>
+  <label class="check"><input type="checkbox" value="inappropriate"> Inappropriate messages / drawings</label>
+  <label class="check"><input type="checkbox" value="spam"> Spam</label>
+  <label class="check"><input type="checkbox" value="cheating"> Botting / cheating</label>
+  <div class="dlg-actions">
+    <button class="btn primary" id="rp-send" type="button">Report</button>
+    <form method="dialog"><button class="btn">Cancel</button></form>
+  </div>
+</dialog>
+
+<dialog id="dlg-info">
+  <h2 id="info-title"></h2>
+  <p id="info-text"></p>
+  <form method="dialog" class="dlg-actions"><button class="btn primary">Okay!</button></form>
+</dialog>
+
+<dialog id="dlg-terms">
+  <h2>Terms of Service</h2>
+  <p>This is a template. Replace it with your own terms before going live. Players are responsible for what they draw and write. Do not post illegal, hateful, sexual or harassing content. Rooms can be moderated, and players can be removed or banned. The service is provided as is, without warranty.</p>
+  <form method="dialog" class="dlg-actions"><button class="btn primary">Close</button></form>
+</dialog>
+<dialog id="dlg-credits">
+  <h2>Credits</h2>
+  <p>Inkling is an original game by you. Built with Node.js, Express, Socket.IO and the HTML5 canvas. Typeface: Fredoka (SIL Open Font License). Avatars and sounds are generated in code, so there are no external assets.</p>
+  <form method="dialog" class="dlg-actions"><button class="btn primary">Close</button></form>
+</dialog>
+<dialog id="dlg-contact">
+  <h2>Contact</h2>
+  <p>Found a bug or have an idea? Put your contact e-mail or link here.</p>
+  <form method="dialog" class="dlg-actions"><button class="btn primary">Close</button></form>
+</dialog>
+
+<script src="/socket.io/socket.io.js"></script>
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
